@@ -1,15 +1,16 @@
 # dalynce_sdk 0.1.0
 
-Windows 上位机 **C++ SDK** 预编译包（共享库）。命名空间：`dalynce::sdk`。  
-不含 Ruckig；不含 protobuf 公共头。接口细则见同目录 [`docs/API.md`](docs/API.md)。
+Windows 上位机 **C++ SDK** 预编译包（共享库）。命名空间：`dalynce::sdk`。
 
-| 项 | 值 |
-|----|-----|
-| 版本 | **0.1.0** |
-| CMake 包名 | `dalynce_sdk` |
-| 导入目标 | `dalynce::sdk` |
-| C++ | 20（MSVC） |
-| 依赖 | 无额外 find_package；gRPC 已链入 DLL |
+
+| 项        | 值                             |
+| -------- | ----------------------------- |
+| 版本       | **0.1.0**                     |
+| CMake 包名 | `dalynce_sdk`                 |
+| 导入目标     | `dalynce::sdk`                |
+| C++      | 20（MSVC）                      |
+| 依赖       | 无额外 find_package；gRPC 已链入 DLL |
+
 
 ## 目录
 
@@ -32,9 +33,7 @@ cmake_minimum_required(VERSION 3.24)
 project(my_host LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 
-# 本地目录或 git submodule 检出根（包根含 include/bin/lib）
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/third_party/dalynce_sdk")
-# 或: list(APPEND CMAKE_PREFIX_PATH "D:/path/to/dalynce_sdk-0.1.0")
 
 find_package(dalynce_sdk 0.1 REQUIRED CONFIG)
 
@@ -48,15 +47,9 @@ cmake --build build
 # 将 bin/dalynce_sdk.dll 拷到 exe 旁，或加入 PATH
 ```
 
-预编译包可单独推到 GitHub（例如 `https://github.com/Dru2Sky/dalynce_sdk.git`），下游：
-
-```powershell
-git submodule add https://github.com/Dru2Sky/dalynce_sdk.git third_party/dalynce_sdk
-```
-
-再将 `third_party/dalynce_sdk` 加入 `CMAKE_PREFIX_PATH` 后 `find_package`。
-
 ---
+
+
 
 ## 2. 公共头
 
@@ -67,6 +60,8 @@ git submodule add https://github.com/Dru2Sky/dalynce_sdk.git third_party/dalynce
 ```
 
 ---
+
+
 
 ## 3. 结果判断（所有接口通用）
 
@@ -82,6 +77,8 @@ if (!r.ok()) {
 
 ---
 
+
+
 ## 4. 各接口使用示例
 
 以下默认已创建：
@@ -89,6 +86,8 @@ if (!r.ok()) {
 ```cpp
 dalynce::sdk::Client client;
 ```
+
+
 
 ### 4.1 `connect` / `shutdown`
 
@@ -99,6 +98,8 @@ if (!c.ok()) { /* ... */ }
 // 程序结束前
 client.shutdown();
 ```
+
+
 
 ### 4.2 `health`
 
@@ -111,6 +112,8 @@ if (h.ok()) {
 }
 ```
 
+
+
 ### 4.3 `listDevices`
 
 ```cpp
@@ -122,6 +125,8 @@ if (list.ok()) {
     }
 }
 ```
+
+
 
 ### 4.4 `createDevice` / `destroyDevice`
 
@@ -138,6 +143,8 @@ std::cout << "created id=" << created.value.id
 (void)client.destroyDevice("robot_host_test_sim");
 ```
 
+
+
 ### 4.5 `connectDevice` / `disconnectDevice`
 
 ```cpp
@@ -151,6 +158,8 @@ if (!cd.ok()) { /* ... */ }
 auto dd = client.disconnectDevice(id);
 ```
 
+
+
 ### 4.6 `enable` / `disable`
 
 ```cpp
@@ -161,6 +170,8 @@ if (!en.ok()) { /* ... */ }
 auto dis = client.disable(id);
 ```
 
+
+
 ### 4.7 `emergencyStop`
 
 随时可对设备急停 RT 环：
@@ -168,6 +179,8 @@ auto dis = client.disable(id);
 ```cpp
 (void)client.emergencyStop(id);
 ```
+
+
 
 ### 4.8 `moveJoint`（无 RT 流时）
 
@@ -182,6 +195,8 @@ if (!mj.ok()) {
     std::cerr << "moveJoint: " << mj.message << "\n";
 }
 ```
+
+
 
 ### 4.9 `startRtStream` + `RtSession::write` / `stop`（臂 / sim）
 
@@ -219,6 +234,8 @@ for (int i = 0; i < 100; ++i) {
 (void)session.stop();  // 或让 unique_ptr 析构自动 stop
 ```
 
+
+
 ### 4.10 AGV 实时流（`[v, w]`）
 
 ```cpp
@@ -237,17 +254,23 @@ std::this_thread::sleep_for(std::chrono::milliseconds(40));
 (void)session.stop();
 ```
 
+
+
 ### 4.11 `writeExplicit`（测序 / 丢包）
 
 ```cpp
 (void)session.writeExplicit(/*sequence=*/42, seed, /*timestamp_ns=*/0);
 ```
 
+
+
 ### 4.12 `deviceId` / `running`
 
 ```cpp
 std::cout << session.deviceId() << " running=" << session.running() << "\n";
 ```
+
+
 
 ### 4.13 版本宏
 
@@ -257,6 +280,8 @@ std::cout << "SDK " << DALYNCE_SDK_VERSION_STRING << "\n";
 ```
 
 ---
+
+
 
 ## 5. 推荐完整生命周期（伪代码）
 
@@ -276,17 +301,23 @@ shutdown()
 
 ---
 
+
+
 ## 6. 能力边界
 
-| 有 | 无 |
-|----|----|
-| Health / List / 生命周期 / 急停 | Ruckig 点动往复（请自研或用 Studio） |
-| RT 流 write / 反馈回调 | protobuf / gRPC 头暴露 |
-| `moveJoint`（无流） | 盒端插值 / 厂商驱动 |
+
+| 有                         | 无                   |
+| ------------------------- | ------------------- |
+| Health / List / 生命周期 / 急停 | Ruckig 点动往复         |
+| RT 流 write / 反馈回调         | protobuf / gRPC 头暴露 |
+| `moveJoint`（无流）           | 盒端插值 / 厂商驱动         |
+
 
 ---
+
+
 
 ## 7. 版本兼容
 
 `find_package(dalynce_sdk 0.1)`：**SameMajorVersion**。  
-当前包：**0.1.0**。接口说明：[`docs/API.md`](docs/API.md)。
+当前包：**0.1.0**。
